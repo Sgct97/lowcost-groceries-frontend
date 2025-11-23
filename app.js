@@ -10,7 +10,7 @@
 // ============================================================================
 
 const CONFIG = {
-    API_BASE_URL: 'http://146.190.129.92:8000',  // Droplet 1 API
+    API_BASE_URL: '',  // Use relative URLs (Vercel proxy functions will handle backend routing)
     DEBOUNCE_DELAY: 1200,  // ms to wait after user stops typing (increased to prevent partial word searches)
     POLL_INTERVAL: 2000,  // ms between result polls
     MAX_ITEMS: 10,
