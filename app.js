@@ -10,7 +10,9 @@
 // ============================================================================
 
 const CONFIG = {
-    API_BASE_URL: '',  // Use relative URLs (Vercel proxy functions will handle backend routing)
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://146.190.129.92:8000'  // Local testing: direct API
+        : '',  // Vercel: use proxy (relative URLs)
     DEBOUNCE_DELAY: 1200,  // ms to wait after user stops typing (increased to prevent partial word searches)
     POLL_INTERVAL: 2000,  // ms between result polls
     MAX_ITEMS: 10,
@@ -120,14 +122,22 @@ async function fetchSuggestions(item) {
 /**
  * Display AI suggestions
  */
-function displaySuggestions(data) {
+function displaySuggestions(data, originalText) {
     if (!data || !data.suggested) {
         suggestionsDiv.classList.add('hidden');
-        addManualBtn.style.display = 'block';  // Show manual button if no suggestions
         return;
     }
     
     suggestionsContent.innerHTML = '';
+    
+    // Add "Use as-is" option FIRST (no AI modification)
+    const asIsCard = createSuggestionCard(
+        originalText,
+        false,
+        null,
+        true  // is "as-is" option
+    );
+    suggestionsContent.appendChild(asIsCard);
     
     // Add main suggestion
     const suggested = data.suggested;
@@ -149,18 +159,25 @@ function displaySuggestions(data) {
     }
     
     suggestionsDiv.classList.remove('hidden');
-    addManualBtn.style.display = 'none';  // Hide manual button when suggestions are showing
 }
 
 /**
  * Create suggestion card element
  */
-function createSuggestionCard(name, isBest, pendingId = null) {
+function createSuggestionCard(name, isBest, pendingId = null, isAsIs = false) {
     const card = document.createElement('div');
     card.className = 'suggestion-card';
+    
+    let badge = '';
+    if (isAsIs) {
+        badge = '<span class="suggestion-badge" style="background: #666;">Use As-Is</span>';
+    } else if (isBest) {
+        badge = '<span class="suggestion-badge">AI Recommended</span>';
+    }
+    
     card.innerHTML = `
         <span class="suggestion-name">${name}</span>
-        ${isBest ? '<span class="suggestion-badge">Best Match</span>' : ''}
+        ${badge}
     `;
     
     card.addEventListener('click', () => {
@@ -347,6 +364,15 @@ function renderPendingSuggestions() {
                 </div>
             `;
             
+            // Add "Use as-is" option FIRST
+            const asIsCard = createSuggestionCard(
+                pending.originalText,
+                false,
+                pending.id,
+                true  // is "as-is" option
+            );
+            pendingCard.appendChild(asIsCard);
+            
             // Add main suggestion
             if (data.suggested) {
                 const mainCard = createSuggestionCard(
@@ -402,7 +428,10 @@ itemInput.addEventListener('keypress', (e) => {
 addManualBtn.addEventListener('click', () => {
     const value = itemInput.value.trim();
     if (value.length >= 2) {
-        submitItemForAI(value);
+        // Add directly to cart WITHOUT AI suggestions
+        addToCart(value);
+        itemInput.value = '';
+        itemInput.focus();
     }
 });
 
