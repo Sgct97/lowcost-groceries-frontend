@@ -428,10 +428,8 @@ itemInput.addEventListener('keypress', (e) => {
 addManualBtn.addEventListener('click', () => {
     const value = itemInput.value.trim();
     if (value.length >= 2) {
-        // Add directly to cart WITHOUT AI suggestions
-        addToCart(value);
-        itemInput.value = '';
-        itemInput.focus();
+        // Trigger AI suggestions (same as pressing Enter)
+        submitItemForAI(value);
     }
 });
 
